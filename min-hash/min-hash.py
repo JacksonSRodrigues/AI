@@ -1,54 +1,8 @@
 import binascii
 import random
 import numpy as np
+from chunker import chunked_iterator,chunked_comparison
 
-def chunked_iterator(extending_function):
-    def wrapper(item_count = 1,
-                chunk_length=1000, 
-                chunk_input=lambda start,end: [],
-                chunk_output=lambda start,end,shingles:None):
-        c_start_item = 0
-        while c_start_item < item_count:
-            c_end_item = c_start_item + chunk_length
-            if c_end_item > item_count:
-                c_end_item = item_count
-
-            chunked_items = chunk_input(c_start_item,c_end_item)
-            result = extending_function(chunked_items)
-            chunk_output(c_start_item,c_end_item, result)
-            c_start_item = c_end_item
-    return wrapper
-
-
-def chunked_comparison(extending_function):
-    
-    def next_chunk_end(start, length, limit):
-        end = start + length
-        if end > limit:
-            end = limit
-        return end
-    
-    def wrapper(item_count = 1,
-                chunk_length=1000, 
-                chunk_input=lambda start,end: [],
-                chunk_output=lambda row_range,column_range,matrix:None):
-        r_start_item = 0
-        
-        while r_start_item < item_count:
-            r_end_item = next_chunk_end(r_start_item,chunk_length,item_count) 
-            row_chunks = chunk_input(r_start_item,r_end_item)
-            print(len(row_chunks))
-            c_start_item = 0
-            while c_start_item < item_count:
-                c_end_item = next_chunk_end(c_start_item,chunk_length,item_count)
-                column_chunks = chunk_input(c_start_item,c_end_item)
-                result = extending_function(row_chunks,column_chunks,(r_start_item,r_end_item),(c_start_item,c_end_item))
-                chunk_output((r_start_item,r_end_item),(c_start_item,c_end_item), result)
-                c_start_item = c_end_item
-                
-            r_start_item = r_end_item
-    return wrapper
-        
 
 def get_shingles(words, k=2, hasher=lambda x: x):
   shingles = set()
@@ -93,6 +47,8 @@ def generate_signature_comparision(rows,columns,row_range,column_range):
         m_rows.append(m_cols)
     return m_rows
 
+
+
 max_shingle_id = 2**32 - 1
 nearest_prime_larger_than_max_shingle_id = 4294967311 
 hash_count = 10
@@ -132,6 +88,15 @@ generate_signature_comparision(item_count=len(signatures), chunk_length=2,
                                chunk_output= write_signature_chunk)
 
 
+def sample(**kwargs):
+    print(kwargs['a'],kwargs['b'])
+
+sample(a='A',b='B')
+
+def samp2(c,d):
+    print(c,d)
+
+samp2(**{'c':'C','d':'D'})
 
 
 
