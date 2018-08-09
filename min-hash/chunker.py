@@ -25,7 +25,7 @@ def chunked_iterator(extending_function):
     return wrapper
 
 
-def chunked_comparison(extending_function):
+def chunked_comparator(extending_function):
     
     def next_chunk_end(start, length, limit):
         end = start + length

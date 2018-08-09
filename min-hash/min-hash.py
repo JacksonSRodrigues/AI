@@ -1,7 +1,7 @@
 import binascii
 import random
 import numpy as np
-from chunker import chunked_iterator,chunked_comparison
+from chunker import chunked_iterator,chunked_comparator
 
 
 def get_shingles(words, k=2, hasher=lambda x: x):
@@ -35,7 +35,7 @@ def generate_signature_for_items(rows):
             range(0,hash_count))),
             rows))
 
-@chunked_comparison
+@chunked_comparator
 def generate_signature_comparision(rows,columns,row_range,column_range):
     m_rows = []
     for row in rows:
