@@ -27,24 +27,33 @@ def get_shingles(words, k=2, hasher=lambda x: x):
     shingles.add(shingle)
   return list(shingles)
 
-@chunk_data_processor
-def generate_shingles_for_items(row_data_collection):
-    return list(map(lambda row: get_shingles(row, hasher=lambda x:binascii.crc32(bytearray(x,'UTF-8')) & 0xffffffff),
-                    row_data_collection))
+def get_hash_code(row_shingles, coeff_a, coeff_b, prime_greater_than_max_shingle):
+    return min(map(lambda shingle_id: (coeff_a*shingle_id + coeff_b)% prime_greater_than_max_shingle, 
+        row_shingles))
     
-
-max_shingle_id = 2**32 - 1
-nearest_prime_larger_than_max_shingle_id = 4294967311 
-
-def generate_coefficients(k, max_shingle):
+def get_random_coefficients(k, max_shingle):
     coefficients = set()
     while(len(coefficients) < k):
         coefficient = random.randint(0, max_shingle)
         coefficients.add(coefficient)
     return list(coefficients)
 
-        
-print(generate_coefficients(hash_count,max_shingle_id)) 
+@chunk_data_processor
+def generate_shingles_for_items(row_data_collection):
+    return list(map(lambda row: get_shingles(row, hasher=lambda x:binascii.crc32(bytearray(x,'UTF-8')) & 0xffffffff),
+                    row_data_collection))
+    
+@chunk_data_processor
+def generate_signature_for_items(rows):
+    global hash_count
+    return list(map(lambda row: list(map(lambda c_index:get_hash_code(row, coeffs_a[c_index],coeffs_b[c_index],nearest_prime_larger_than_max_shingle_id ),
+            range(0,hash_count))),
+            rows))
+    
+
+max_shingle_id = 2**32 - 1
+nearest_prime_larger_than_max_shingle_id = 4294967311 
+hash_count = 10
 
 
 source = [['abc','def','hij','klm','abc','der','sdf','fwr'],
@@ -54,28 +63,30 @@ source = [['abc','def','hij','klm','abc','der','sdf','fwr'],
           ['der','sdf','fwr']]
 
 shingles = []
+generate_shingles_for_items(item_count=len(source), chunk_length=2, 
+                            chunk_input=lambda start,end: source[start:end], 
+                            chunk_output=lambda start,end, data: shingles.extend(data))
+
+coeffs_a = get_random_coefficients(hash_count,max_shingle_id) 
+coeffs_b = get_random_coefficients(hash_count,max_shingle_id)
+
+signatures = []
+generate_signature_for_items(item_count=len(shingles),chunk_length=2,
+                             chunk_input= lambda start,end: shingles[start:end],
+                             chunk_output= lambda start,end, data: signatures.extend(data))
 
 def fetch_data(start,end):
   print('fetching',start,end)
-  return source[start:end]
+  return shingles[start:end]
 
 def write_data(start,end,data):
-  global shingles
-  shingles.extend(data)
+  global signatures
+  signatures.extend(data)
   print('writing',start,end,data)
-
-generate_shingles_for_items(item_count=len(source), chunk_length=2, 
-                            chunk_input=fetch_data, chunk_output=write_data)
+  
 
 
-hash_count = 10
 
-coeffs_a = generate_coefficients(hash_count,max_shingle_id) 
-coeffs_b = generate_coefficients(hash_count,max_shingle_id)
-coeff_a = coeffs_a[0]
-coeff_b = coeffs_b[0]'
-row_shingles = shingles[0]
+    
 
-
-min(map(lambda shingle_id: (coeff_a*shingle_id + coeff_b)% nearest_prime_larger_than_max_shingle_id, 
-        row_shingles))
+    
