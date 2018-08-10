@@ -48,7 +48,7 @@ def generate_signature_comparision(row_range,column_range,rows,columns):
     return m_rows
 
 
-@chunked_condtional_comparator
+@chunked_comparator
 def generate_conditional_comparision(row_range,column_range,conditional_matrix,rows,columns):
     m_rows = []
     r_start,r_end = row_range
