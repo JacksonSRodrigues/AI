@@ -1,7 +1,7 @@
 import binascii
 import random
 import numpy as np
-from chunker import chunked_iterator,chunked_comparator
+from chunker import chunked_iterator,chunked_comparator,chunked_condtional_comparator
 
 
 def get_shingles(words, k=2, hasher=lambda x: x):
@@ -36,7 +36,7 @@ def generate_signature_for_items(rows):
             rows))
 
 @chunked_comparator
-def generate_signature_comparision(rows,columns,row_range,column_range):
+def generate_signature_comparision(row_range,column_range,rows,columns):
     m_rows = []
     for row in rows:
         size = len(row)
@@ -44,6 +44,27 @@ def generate_signature_comparision(rows,columns,row_range,column_range):
         for column in columns:
             match=sum(map(lambda index: row[index]==column[index] ,range(0,size)))
             m_cols.append(match/size)
+        m_rows.append(m_cols)
+    return m_rows
+
+
+@chunked_condtional_comparator
+def generate_conditional_comparision(row_range,column_range,conditional_matrix,rows,columns):
+    m_rows = []
+    r_start,r_end = row_range
+    c_start,c_end = column_range
+    print(len(rows),len(columns))
+    for r_index in range(0,r_end-r_start):
+        row = set(rows[r_index])
+        m_cols = []
+        print('-r',r_index)
+        for c_index in range(0,c_end-c_start):
+            column = set(columns[c_index])
+            match_percentage = 0
+            print('--c',c_index)
+            if conditional_matrix[r_index][c_index]:
+                match_percentage= len(row.intersection(column))/len(row.union(column))
+            m_cols.append(match_percentage)
         m_rows.append(m_cols)
     return m_rows
 
@@ -87,16 +108,27 @@ generate_signature_comparision(item_count=len(signatures), chunk_length=2,
                                chunk_input=lambda start,end: signatures[start:end],
                                chunk_output= write_signature_chunk)
 
+simlarity_matrix = np.zeros(shape=(len(signatures),len(signatures)))
 
-def sample(**kwargs):
-    print(kwargs['a'],kwargs['b'])
+def read_signature_matrix_chunk(row_range,column_range):
+    global signature_matrix
+    r_start,r_end = row_range
+    c_start,c_end = column_range
+    return signature_matrix[r_start:r_end,c_start:c_end] >= 0.5
 
-sample(a='A',b='B')
+def write_similarity_matrix_chunk(row_range,col_range,data):
+    global simlarity_matrix
+    r_start,r_end = row_range
+    c_start,c_end = col_range
+    for row in range(r_start,r_end):
+        np.put(simlarity_matrix[row],range(c_start,c_end),data[row-r_start])
+    print('writing',row_range,col_range,data)
+    
+generate_conditional_comparision(item_count=len(signatures), chunk_length=2,
+                               chunk_conditional = read_signature_matrix_chunk,
+                               chunk_input=lambda start,end: shingles[start:end],
+                               chunk_output= write_similarity_matrix_chunk)
 
-def samp2(c,d):
-    print(c,d)
-
-samp2(**{'c':'C','d':'D'})
 
 
 
