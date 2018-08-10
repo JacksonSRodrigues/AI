@@ -6,6 +6,8 @@ Created on Thu Aug  9 23:42:25 2018
 @author: jackson
 """
 
+def _named_args(**kwargs):
+    return kwargs
 
 def chunked_iterator(extending_function):
     def wrapper(item_count = 1,
@@ -18,8 +20,8 @@ def chunked_iterator(extending_function):
             if c_end_item > item_count:
                 c_end_item = item_count
 
-            chunked_items = chunk_input(c_start_item,c_end_item)
-            result = extending_function(chunked_items)
+            named_args = chunk_input(c_start_item,c_end_item)
+            result = extending_function(**named_args)
             chunk_output(c_start_item,c_end_item, result)
             c_start_item = c_end_item
     return wrapper
@@ -76,9 +78,9 @@ def chunked_condtional_comparator(extending_function):
                 c_end_item = next_chunk_end(c_start_item,chunk_length,item_count)
                 #print('----c',c_start_item,c_end_item)
                 column_chunks = chunk_input(c_start_item,c_end_item)
-                print('----c',c_start_item,c_end_item,':',len(column_chunks))
+                #print('----c',c_start_item,c_end_item,':',len(column_chunks))
                 condition_chunk = chunk_conditional((r_start_item,r_end_item),(c_start_item,c_end_item))
-                print((r_start_item,r_end_item),(c_start_item,c_end_item),condition_chunk)
+                #print((r_start_item,r_end_item),(c_start_item,c_end_item),condition_chunk)
                 result = extending_function((r_start_item,r_end_item),(c_start_item,c_end_item),condition_chunk,row_chunks,column_chunks)
                 chunk_output((r_start_item,r_end_item),(c_start_item,c_end_item), result)
                 c_start_item = c_end_item
