@@ -40,7 +40,7 @@ h5file,shingles = get_pytable_with_node(h5file_path,node_path='shingles')
 if shingles is None:
     shingles = h5file.create_vlarray(h5file.root, 'shingles', tables.Int64Atom(shape=()), filters=tables.Filters(1))
 
-#shingles = []
+
 def read_documents(start,end):
     if start % 1000 == 0:
         memory_logger.log_ram_usage(start)
@@ -55,7 +55,7 @@ def write_shingles(start,end, data):
 min_hash.generate_shingles_for_items(item_count=100, chunk_length=5, 
                             chunk_input=read_documents, 
                             chunk_output=write_shingles)
-h5file.close()
+
 
 
 # Generate random coefficients
@@ -64,7 +64,7 @@ coefficients_b = min_hash.get_random_coefficients(hash_count,max_shingle_id)
 
 
 # Generate Signature for each row shingles
-h5file,signatures = get_pytable_with_node(h5file_path,node_path='signatures')
+signatures = get_node_from_pytable_file(h5file,'signatures')
 if signatures is None:
     signatures = h5file.create_vlarray(h5file.root, 'signatures', tables.Int64Atom(shape=()), filters=tables.Filters(1))
 
@@ -74,7 +74,7 @@ def write_signatures(start,end, data):
     global signatures
     for row in data:
         signatures.append(row)
-#signatures = []
+
 min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=100,
                              chunk_input= lambda start,end: _named_args(rows=shingles[start:end],
                                                                         coeffs_a=coefficients_a,
@@ -83,7 +83,7 @@ min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=100
                                                                         max_prime=nearest_prime_larger_than_max_shingle_id),
                              chunk_output= write_signatures)
 
-h5file.close()
+
 
 
 ##################################
@@ -99,8 +99,8 @@ def fill_zeros_earray_matrix(matrix,nrows,chunk_length=1000):
     return matrix
 
 
-h5file,signature_matrix = get_pytable_with_node(h5file_path,node_path='signature_matrix')
-signatures = get_node_from_pytable_file(h5file,'signatures')
+
+signature_matrix = get_node_from_pytable_file(h5file,'signature_matrix')
 if signature_matrix is None:
     signature_matrix = h5file.create_earray(h5file.root, 'signature_matrix', 
                                             tables.Float64Atom(shape=()),
@@ -108,7 +108,9 @@ if signature_matrix is None:
                                             filters=tables.Filters(1),
                                             expectedrows=signatures.nrows)
     signature_matrix = fill_zeros_earray_matrix(signature_matrix,signatures.nrows)
-    #signature_matrix = signature_matrix[:]
+
+    
+signatures = get_node_from_pytable_file(h5file,'signatures')
 
 def read_signature_chunks(row_range,col_range):
     global signatures
@@ -121,7 +123,6 @@ def write_signature_comparison_chunk(row_range,col_range,data):
     global signature_matrix
     r_start,r_end = row_range
     c_start,c_end = col_range
-    print('writing',row_range,col_range)
     for row in range(r_start,r_end):
         # can only update individual row not intersection.
         _tmp_row = signature_matrix[row] # so fetch the whole row
@@ -133,13 +134,23 @@ def write_signature_comparison_chunk(row_range,col_range,data):
 min_hash.generate_signature_comparision(item_count=len(signatures), chunk_length=20,
                                chunk_input=read_signature_chunks,
                                chunk_output= write_signature_comparison_chunk)
-h5file.close()
 
 
 ##################################
 # generate final similarity matrix
 ##################################
-simlarity_matrix = np.zeros(shape=(len(signatures),len(signatures)))
+
+simlarity_matrix = get_node_from_pytable_file(h5file,'simlarity_matrix')
+
+if simlarity_matrix is None:
+    simlarity_matrix = h5file.create_earray(h5file.root, 'simlarity_matrix', 
+                                            tables.Float64Atom(shape=()),
+                                            shape=(0, signatures.nrows), 
+                                            filters=tables.Filters(1),
+                                            expectedrows=signatures.nrows)
+    simlarity_matrix = fill_zeros_earray_matrix(simlarity_matrix,signatures.nrows)
+
+shingles = get_node_from_pytable_file(h5file,'shingles')
 
 def read_shingles_and_signature_matrix_chunk(row_range,column_range):
     global signature_matrix
@@ -153,11 +164,15 @@ def write_similarity_matrix_chunk(row_range,col_range,data):
     global simlarity_matrix
     r_start,r_end = row_range
     c_start,c_end = col_range
+    print('writing',row_range,col_range)
     for row in range(r_start,r_end):
-        np.put(simlarity_matrix[row],range(c_start,c_end),data[row-r_start])
+        _tmp_row = simlarity_matrix[row] # so fetch the whole row
+        np.put(_tmp_row,range(c_start,c_end),data[row-r_start]) # update desired section
+        simlarity_matrix[row] = _tmp_row # set back values
+        
     #print('writing',row_range,col_range,data)
     
 min_hash.generate_conditional_comparision(item_count=len(signatures), chunk_length=2,
                                chunk_input=read_shingles_and_signature_matrix_chunk,
                                chunk_output= write_similarity_matrix_chunk)
-
+h5file.close()
