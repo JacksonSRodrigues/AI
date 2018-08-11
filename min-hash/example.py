@@ -10,6 +10,7 @@ import min_hash
 from chunker import _named_args
 import tables
 import memory_logger
+import datetime
 
 def get_node_from_pytable_file(hdf5file,node_path=""):
     _node = None
@@ -33,6 +34,7 @@ source = [['abc','def','hij','klm','abc','der','sdf','fwr'],
           ['hij','klm','abc','der','sdf','fwr'],
           ['der','sdf','fwr']]
 
+memory_logger.log_ram_usage('Started Process {}'.format(datetime.datetime.now()))
 
 # Generate shingle from source
 h5file_path = 'document_sim.h5'
@@ -52,11 +54,11 @@ def write_shingles(start,end, data):
     for row in data:
         shingles.append(row)
 
-min_hash.generate_shingles_for_items(item_count=100, chunk_length=5, 
+min_hash.generate_shingles_for_items(item_count=10000, chunk_length=5, 
                             chunk_input=read_documents, 
                             chunk_output=write_shingles)
 
-
+memory_logger.log_ram_usage('Finished Generating Shingles {}'.format(datetime.datetime.now()))
 
 # Generate random coefficients
 coefficients_a = min_hash.get_random_coefficients(hash_count,max_shingle_id) 
@@ -75,7 +77,7 @@ def write_signatures(start,end, data):
     for row in data:
         signatures.append(row)
 
-min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=100,
+min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=1000,
                              chunk_input= lambda start,end: _named_args(rows=shingles[start:end],
                                                                         coeffs_a=coefficients_a,
                                                                         coeffs_b=coefficients_b,
@@ -83,7 +85,7 @@ min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=100
                                                                         max_prime=nearest_prime_larger_than_max_shingle_id),
                              chunk_output= write_signatures)
 
-
+memory_logger.log_ram_usage('Finished Generating Signatures {}'.format(datetime.datetime.now()))
 
 
 ##################################
@@ -116,7 +118,7 @@ def read_signature_chunks(row_range,col_range):
     global signatures
     r_start,r_end = row_range
     c_start,c_end = col_range
-    print(row_range,col_range)
+    memory_logger.log_ram_usage('{} , {} - {}'.format(row_range,col_range,datetime.datetime.now()))
     return _named_args(rows=signatures[r_start:r_end],columns=signatures[c_start:c_end])
 
 def write_signature_comparison_chunk(row_range,col_range,data):
@@ -131,10 +133,11 @@ def write_signature_comparison_chunk(row_range,col_range,data):
         
   
 
-min_hash.generate_signature_comparision(item_count=len(signatures), chunk_length=20,
+min_hash.generate_signature_comparision(item_count=len(signatures), chunk_length=1000,
                                chunk_input=read_signature_chunks,
                                chunk_output= write_signature_comparison_chunk)
 
+memory_logger.log_ram_usage('Finished Generating Signature Matrix {}'.format(datetime.datetime.now()))
 
 ##################################
 # generate final similarity matrix
@@ -157,6 +160,7 @@ def read_shingles_and_signature_matrix_chunk(row_range,column_range):
     global shingles
     r_start,r_end = row_range
     c_start,c_end = column_range
+    memory_logger.log_ram_usage('{} , {} - {}'.format(row_range,column_range,datetime.datetime.now()))
     return _named_args(rows=shingles[r_start:r_end], columns=shingles[c_start:c_end],
                        conditional_matrix=(signature_matrix[r_start:r_end,c_start:c_end] >= 0.5))
 
@@ -172,7 +176,10 @@ def write_similarity_matrix_chunk(row_range,col_range,data):
         
     #print('writing',row_range,col_range,data)
     
-min_hash.generate_conditional_comparision(item_count=len(signatures), chunk_length=2,
+min_hash.generate_conditional_comparision(item_count=len(signatures), chunk_length=100,
                                chunk_input=read_shingles_and_signature_matrix_chunk,
                                chunk_output= write_similarity_matrix_chunk)
+
 h5file.close()
+
+memory_logger.log_ram_usage('Finished Generating Similarity Matrix {}'.format(datetime.datetime.now()))
