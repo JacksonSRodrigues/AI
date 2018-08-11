@@ -11,6 +11,17 @@ from chunker import _named_args
 import tables
 import memory_logger
 
+def get_node_from_pytable_file(hdf5file,node_path=""):
+    _node = None
+    if hdf5file.__contains__('/{}'.format(node_path)):
+        _node = hdf5file.get_node('/{}'.format(node_path))
+    return _node
+    
+def get_pytable_with_node(file_path,mode='a',node_path=''):
+    _h5file = tables.open_file(file_path, mode=mode)
+    _node = get_node_from_pytable_file(_h5file,node_path)
+    return (_h5file,_node)
+
 max_shingle_id = 2**32 - 1
 nearest_prime_larger_than_max_shingle_id = 4294967311 
 hash_count = 10
@@ -24,11 +35,11 @@ source = [['abc','def','hij','klm','abc','der','sdf','fwr'],
 
 
 # Generate shingle from source
-
 h5file_path = 'document_sim.h5'
-h5file = tables.open_file(h5file_path, mode='a')
+h5file,shingles = get_pytable_with_node(h5file_path,node_path='shingles')
+if shingles is None:
+    shingles = h5file.create_vlarray(h5file.root, 'shingles', tables.Int64Atom(shape=()), filters=tables.Filters(1))
 
-shingles = h5file.create_vlarray(h5file.root, 'shingles', tables.Int64Atom(shape=()), filters=tables.Filters(1))
 #shingles = []
 def read_documents(start,end):
     if start % 100000 == 0:
@@ -53,15 +64,26 @@ coefficients_b = min_hash.get_random_coefficients(hash_count,max_shingle_id)
 
 
 # Generate Signature for each row shingles
-signatures = []
-min_hash.generate_signature_for_items(item_count=len(shingles),chunk_length=2,
+h5file,signatures = get_pytable_with_node(h5file_path,node_path='signatures')
+if signatures is None:
+    signatures = h5file.create_vlarray(h5file.root, 'signatures', tables.Int64Atom(shape=()), filters=tables.Filters(1))
+
+shingles = get_node_from_pytable_file(h5file,'shingles')
+
+def write_signatures(start,end, data):
+    global signatures
+    for row in data:
+        signatures.append(row)
+#signatures = []
+min_hash.generate_signature_for_items(item_count=shingles.nrows,chunk_length=1000,
                              chunk_input= lambda start,end: _named_args(rows=shingles[start:end],
                                                                         coeffs_a=coefficients_a,
                                                                         coeffs_b=coefficients_b,
                                                                         hash_count=hash_count,
                                                                         max_prime=nearest_prime_larger_than_max_shingle_id),
-                             chunk_output= lambda start,end, data: signatures.extend(data))
+                             chunk_output= write_signatures)
 
+h5file.close()
 
 
 ##################################
@@ -114,27 +136,3 @@ min_hash.generate_conditional_comparision(item_count=len(signatures), chunk_leng
                                chunk_input=read_shingles_and_signature_matrix_chunk,
                                chunk_output= write_similarity_matrix_chunk)
 
-
-With In memory Array
-0  - ram:  156.8MB
-100000  - ram:  161.8MB
-200000  - ram:  188.6MB
-300000  - ram:  215.4MB
-400000  - ram:  242.3MB
-500000  - ram:  269.0MB
-600000  - ram:  296.1MB
-700000  - ram:  323.0MB
-800000  - ram:  350.8MB
-900000  - ram:  378.3MB
-
-With Pytables VLArray
-0  - ram:  159.3MB
-100000  - ram:  159.3MB
-200000  - ram:  159.3MB
-300000  - ram:  159.3MB
-400000  - ram:  159.3MB
-500000  - ram:  159.3MB
-600000  - ram:  159.3MB
-700000  - ram:  159.3MB
-800000  - ram:  159.3MB
-900000  - ram:  159.3MB
