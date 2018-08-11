@@ -1,11 +1,11 @@
 import binascii
 import random
 import numpy as np
-from chunker import chunked_iterator,chunked_comparator,chunked_condtional_comparator
+from chunker import chunked_iterator,chunked_comparator
 
 
 
-def get_shingles(words, k=2, hasher=lambda x: x):
+def get_shingles(words, k=2, hasher=lambda x: binascii.crc32(bytearray(x,'UTF-8')) & 0xffffffff):
   shingles = set()
   for i in range(0,len(words)-k+1):
     shingle = ' '.join(words[i:i+k])
@@ -26,7 +26,7 @@ def get_random_coefficients(k, max_shingle):
 
 @chunked_iterator
 def generate_shingles_for_items(rows):
-    return list(map(lambda row: get_shingles(row, hasher=lambda x:binascii.crc32(bytearray(x,'UTF-8')) & 0xffffffff),
+    return list(map(lambda row: get_shingles(row),
                     rows))
     
 @chunked_iterator

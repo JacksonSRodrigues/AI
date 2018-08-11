@@ -25,6 +25,7 @@ def chunked_iterator(extending_function):
             named_args = chunk_input(c_start_item,c_end_item)
             result = extending_function(**named_args)
             chunk_output(c_start_item,c_end_item, result)
+            
             c_start_item = c_end_item
     return wrapper
 
