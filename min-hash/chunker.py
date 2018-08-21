@@ -6,12 +6,25 @@ Created on Thu Aug  9 23:42:25 2018
 @author: jackson
 """
 
+import types
+import functools
+
+def func_copy(f):
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                           argdefs=f.__defaults__,
+                           closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
+
+
 def _named_args(**kwargs):
     return kwargs
 
     
 
 def chunked_iterator(extending_function):
+    extending_func_copy = func_copy(extending_function)
     def wrapper(item_count = 1,
                 chunk_length=1000, 
                 chunk_input=lambda start,end: [],
@@ -27,12 +40,14 @@ def chunked_iterator(extending_function):
             chunk_output(c_start_item,c_end_item, result)
             
             c_start_item = c_end_item
-    return wrapper
+            
+    extending_func_copy._chunked = wrapper
+    return extending_func_copy
 
 
 
 def chunked_comparator(extending_function):
-    
+    extending_func_copy = func_copy(extending_function)
     def next_chunk_end(start, length, limit):
         end = start + length
         if end > limit:
@@ -58,4 +73,6 @@ def chunked_comparator(extending_function):
                 c_start_item = c_end_item
                 
             r_start_item = r_end_item
-    return wrapper
+    
+    extending_func_copy._chunked = wrapper
+    return extending_func_copy

@@ -57,7 +57,7 @@ def write_shingles(start,end, data):
     for row in data:
         shingles.append(row)
 
-min_hash.generate_shingles_for_items(item_count=document_count, chunk_length=5, 
+min_hash.generate_shingles_for_items._chunked(item_count=document_count, chunk_length=5, 
                             chunk_input=read_documents, 
                             chunk_output=write_shingles)
 h5file.close()
@@ -83,7 +83,7 @@ def write_signatures(start,end, data):
     for row in data:
         signatures.append(row)
 
-min_hash.generate_signature_for_items(item_count=document_count,chunk_length=chunk_length,
+min_hash.generate_signature_for_items._chunked(item_count=document_count,chunk_length=chunk_length,
                              chunk_input= lambda start,end: _named_args(rows=shingles[start:end],
                                                                         coeffs_a=coefficients_a,
                                                                         coeffs_b=coefficients_b,
@@ -143,7 +143,7 @@ def write_signature_comparison_chunk(row_range,col_range,data):
         
   
 
-min_hash.generate_signature_comparision(item_count=document_count, chunk_length=chunk_length,
+min_hash.generate_signature_comparision._chunked(item_count=document_count, chunk_length=chunk_length,
                                chunk_input=read_signature_chunks,
                                chunk_output= write_signature_comparison_chunk)
 
@@ -189,7 +189,7 @@ def write_similarity_matrix_chunk(row_range,col_range,data):
         
     #print('writing',row_range,col_range,data)
     
-min_hash.generate_conditional_comparision(item_count=document_count, chunk_length=chunk_length,
+min_hash.generate_conditional_comparision._chunked(item_count=document_count, chunk_length=chunk_length,
                                chunk_input=read_shingles_and_signature_matrix_chunk,
                                chunk_output= write_similarity_matrix_chunk)
 
