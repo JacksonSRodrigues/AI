@@ -1,5 +1,6 @@
 from enum import Enum
 import types
+import random
 
 class Status(Enum):
     NotStarted = 0
@@ -24,6 +25,7 @@ class Board:
         self.status = Status.NotStarted
         self.result = Result.Invalid
         self.players = []
+        self.last_player = None
 
     def available_moves(self):
         return []
@@ -35,10 +37,21 @@ class Board:
         return 1
 
     def add_new_player(self, player):
-        if self.players.count() < self.max_players():
+        if len(self.players) < self.max_players():
             self.players.append(player)
         else:
             raise Exception('Players have reached the limit')
+
+    def next_player(self):
+        player = None
+        if len(self.players) > 0:
+            try:
+                player_index = (self.players.index(self.last_player) + 1) % len(self.players)
+                player = self.players[player_index]
+            except:
+                player = self.players[0]
+        return player
+
 
     def is_move_valid(self,move):
         return False
@@ -47,12 +60,20 @@ class Board:
         return True
 
     def make_move(self,player,move):
+        self.status = Status.InProgress
         if not self.is_move_valid(move):
             raise Exception('Invalid Move')
         else:
+            self.last_player = player
             self.save_move(player,move)
 
-    def evaluate_result(self):
+        result = self.evaluate_result(player)
+        if result != Result.Invalid:
+            print('Game Over !!')
+            self.status = Status.Complete
+            self.result = result
+
+    def evaluate_result(self,player):
         return Result.Invalid
 
     def visualize_state(self):
@@ -63,6 +84,16 @@ class TicTacToe(Board):
 
     def __init__(self):
         self.nodes = [[' ' for c in range(3)] for r in range(3)]
+        self.winning_states = [
+            [(0,0),(0,1),(0,2)],
+            [(1,0),(1,1),(1,2)],
+            [(2,0),(2,1),(2,2)],
+            [(0,0),(1,0),(2,0)],
+            [(0,1),(1,1),(2,1)],
+            [(0,2),(1,2),(2,2)],
+            [(0,0),(1,1),(2,2)],
+            [(0,2),(1,1),(2,0)]]
+
         super().__init__()
 
     def available_moves(self):
@@ -87,8 +118,30 @@ class TicTacToe(Board):
         self.nodes[row][column] = (player,move)
         return True
 
-    def evaluate_result(self):
-        return Result.Invalid
+    def moves_by_player(self,player):
+        moves = []
+        for r in range(len(self.nodes)):
+            row = self.nodes[r]
+            for c in range(len(row)):
+                column = row[c]
+                if type(column) is tuple and column[0] == player:
+                    moves.append((r,c))
+        return moves
+
+    def evaluate_result(self,player):
+        result = Result.Invalid
+        moves = self.moves_by_player(player)
+
+        for w_state in self.winning_states:
+            matches = set(w_state).intersection(set(moves)) #[i for i,j in zip(w_state,moves) if i == j]
+            if len(matches) >= 3:
+                result = Result.Won
+                break
+        
+        if result == Result.Invalid and len(self.available_moves()) == 0:
+            result = Result.Draw
+
+        return result
 
     def visualize_state(self):
         for row in range(len(self.nodes)):
@@ -105,12 +158,15 @@ class TicTacToe(Board):
 
 
 
-p1 = Player('Jack', 'x')
-p2 = Player('Jill', 'o')
 board = TicTacToe()
-print(board.available_moves())
-board.make_move(p1,(1,1))
-print(board.available_moves())
-board.make_move(p2,(2,1))
-print(board.available_moves())
-board.visualize_state()
+board.add_new_player(Player('Jack', 'x'))
+board.add_new_player(Player('Jill','o'))
+while board.status is not Status.Complete:
+    print('----  {}'.format(board.status))
+    print(board.available_moves())
+    p = board.next_player()
+    available_moves = board.available_moves()
+    move = random.choice(available_moves)
+    print('Move made by {}'.format(p.avatar))
+    board.make_move(p,move)
+    board.visualize_state()
