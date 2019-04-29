@@ -1,5 +1,6 @@
 from enum import Enum
 import types
+import random
 
 class Status(Enum):
     NotStarted = 0
@@ -17,6 +18,11 @@ class Player:
         self.name = name
         self.avatar = avatar
 
+    def choose_move(self,valid_moves):
+        if len(valid_moves) <= 0:
+            raise Exception('No Valid moves available')
+        return random.choice(valid_moves)
+
 
 class Board:
 
@@ -25,7 +31,13 @@ class Board:
         self.result = Result.Invalid
         self.players = []
         self.last_player = None
+        self.winner = None
 
+    def reset(self):
+        self.status = Status.NotStarted
+        self.result = Result.Invalid
+        self.last_player = None
+        self.winner = None
 
     def available_moves(self):
         return []
@@ -78,6 +90,8 @@ class Board:
             print('Game Over !!')
             self.status = Status.Complete
             self.result = result
+            if result == Result.Won:
+                self.winner = player
 
 
     def evaluate_result(self,player):

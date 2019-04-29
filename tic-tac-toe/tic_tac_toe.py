@@ -17,6 +17,9 @@ class TicTacToe(Board):
         super().__init__()
 
 
+    def reset(self):
+        super().reset()
+        self.nodes = [[' ' for c in range(3)] for r in range(3)]
 
     def available_moves(self):
         moves = []
