@@ -1,5 +1,6 @@
 from tic_tac_toe import TicTacToe, Player, Status, Result
 from live_player import LivePlayer
+from min_max_player import MinMaxPlayer
 
 board = TicTacToe()
 board.add_new_player(LivePlayer('Jack', 'x'))
@@ -8,17 +9,17 @@ board.add_new_player(Player('Jill','o'))
 def play_game(board):
     while board.status is not Status.Complete:
         print('-------------')
+        print(board.hash_value())
         p = board.next_player()
         print('Move for {}'.format(p.avatar))
-        available_moves = board.available_moves()
-        move = p.choose_move(available_moves) 
+        move = p.choose_move(board) 
         board.make_move(p,move)
         board.visualize_state()
 
 def test_live_player():
     board = TicTacToe()
+    board.add_new_player(MinMaxPlayer('Jill','o'))
     board.add_new_player(LivePlayer('Jack', 'x'))
-    board.add_new_player(Player('Jill','o'))
     play_game(board)
 
 test_live_player()
