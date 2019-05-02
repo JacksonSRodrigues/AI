@@ -5,7 +5,8 @@ class LivePlayer(Player):
     def __init__(self, name, avatar):
         super().__init__(name,avatar)
 
-    def choose_move(self,valid_moves):
+    def choose_move(self,board):
+        valid_moves = board.available_moves()
         print(valid_moves)
         recieved_valid_move = False
         move = None

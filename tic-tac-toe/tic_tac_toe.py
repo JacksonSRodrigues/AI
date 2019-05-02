@@ -1,9 +1,10 @@
 from board import Board, Result, Status, Player
+import itertools
 
 class TicTacToe(Board):
 
-    def __init__(self):
-        self.nodes = [[' ' for c in range(3)] for r in range(3)]
+    def __init__(self, nodes=[[' ' for c in range(3)] for r in range(3)]):
+        self.nodes = nodes
         self.winning_states = [
             [(0,0),(0,1),(0,2)],
             [(1,0),(1,1),(1,2)],
@@ -20,6 +21,12 @@ class TicTacToe(Board):
     def reset(self):
         super().reset()
         self.nodes = [[' ' for c in range(3)] for r in range(3)]
+
+    def hash_value(self):
+        return hash(",".join(self.one_dimensional_representation()))
+
+    def one_dimensional_representation(self):
+        return list(map(lambda node: self.translate_node(node) ,itertools.chain.from_iterable(self.nodes)))
 
     def available_moves(self):
         moves = []

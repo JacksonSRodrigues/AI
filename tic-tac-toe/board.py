@@ -12,13 +12,15 @@ class Result(Enum):
     Invalid = 0
     Won = 1
     Draw = 2
+    Lost = 3
 
 class Player:
     def __init__(self, name, avatar):
         self.name = name
         self.avatar = avatar
 
-    def choose_move(self,valid_moves):
+    def choose_move(self, board):
+        valid_moves = board.available_moves()
         if len(valid_moves) <= 0:
             raise Exception('No Valid moves available')
         return random.choice(valid_moves)
@@ -38,6 +40,12 @@ class Board:
         self.result = Result.Invalid
         self.last_player = None
         self.winner = None
+
+    def hash_value(self):
+        pass
+
+    def one_dimensional_representation(self):
+        pass
 
     def available_moves(self):
         return []
