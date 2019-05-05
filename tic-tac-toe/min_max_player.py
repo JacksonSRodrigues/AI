@@ -33,10 +33,10 @@ class MinMaxPlayer(Player):
                 eval_board = self.board_copy(board)
                 eval_board.make_move(self._competing_player(eval_board),next_move) 
                 next_score, _ = self.max(eval_board)
-                self.cache[hash_value] = (next_score,next_move)
                 if next_score < score or action is None:
                     score = next_score
                     action = next_move
+                    self.cache[hash_value] = (next_score,next_move)
                 if score == LOSE:
                     break
         return score, action
@@ -60,10 +60,10 @@ class MinMaxPlayer(Player):
                 eval_board = self.board_copy(board)
                 eval_board.make_move(self,next_move)
                 next_score, _ = self.min(eval_board)
-                self.cache[hash_value] = (next_score,next_move)
                 if next_score > score or action is None:
                     score = next_score
                     action = next_move
+                    self.cache[hash_value] = (next_score,next_move)
                 if score == WIN:
                     break
         return score, action

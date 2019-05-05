@@ -32,7 +32,7 @@ def test_live_player():
 
 test_live_player()
 
-def test_board_statistics(p1,p2,test_count=100):
+def test_board_statistics(p1,p2,test_count=1000):
     draws = 0
     player1 = 0
     player2 = 0
@@ -56,4 +56,6 @@ def test_board_statistics(p1,p2,test_count=100):
     print('Draws: {}   Player 1 Won: {}     Player 2 Won: {}'.format(draws,player1,player2))
 
 
-#test_board_statistics(MinMaxPlayer('Jill','o'),Player('Jack', 'x'))
+#test_board_statistics(Player('Jack', 'x'), Player('Jill','o'),10)
+#test_board_statistics(Player('Jack', 'x'),MinMaxPlayer('Jill','o'),10)
+#test_board_statistics(MinMaxPlayer('Jack', 'x'),MinMaxPlayer('Jill','o'),10)
