@@ -10,11 +10,11 @@ WIN=1
 class MinMaxPlayer(Player):
 
     def __init__(self, name, avatar):
-        self.cache = {}
         super().__init__(name,avatar)
+        self.cache = {}
+        
 
     def min(self,board):
-        print('--------min--------------')
         hash_value = board.hash_value()
         if hash_value in self.cache:
             return self.cache[hash_value]
@@ -23,19 +23,15 @@ class MinMaxPlayer(Player):
         action = None
 
         # For handling the cases win happende on last move
-        print(board.winner)
         if board.winner is not None:
             if self == board.winner:
                 score = WIN
             else:
                 score = LOSE
         else:
-            print('e',board.winner)
             for next_move in board.available_moves():
                 eval_board = self.board_copy(board)
-                print('<<',next_move, eval_board.available_moves())
-                eval_board.make_move(self._competing_player(board),next_move) 
-                board.visualize_state()
+                eval_board.make_move(self._competing_player(eval_board),next_move) 
                 next_score, _ = self.max(eval_board)
                 self.cache[hash_value] = (next_score,next_move)
                 if next_score > score or action is None:
@@ -46,7 +42,6 @@ class MinMaxPlayer(Player):
         return score, action
 
     def max(self, board:TicTacToe):
-        print('-----------max-------------')
         hash_value = board.hash_value()
         if hash_value in self.cache:
             return self.cache[hash_value]
@@ -61,15 +56,10 @@ class MinMaxPlayer(Player):
             else:
                 score = LOSE
         else:
-            print("-- {}".format(board.available_moves()))
             for next_move in board.available_moves():
-                #print(next_move)
                 eval_board = self.board_copy(board)
                 eval_board.make_move(self,next_move)
-                print(next_move,eval_board.available_moves())
-                board.visualize_state()
                 next_score, _ = self.min(eval_board)
-                #print(next_move,next_score)
                 self.cache[hash_value] = (next_score,next_move)
                 if next_score < score or action is None:
                     score = next_score
@@ -84,8 +74,12 @@ class MinMaxPlayer(Player):
         return move
 
     def board_copy(self, board):
-        eval_board = TicTacToe(nodes=list(board.nodes))
+        eval_board = TicTacToe(nodes=list(map(lambda row: list(row),board.nodes)))
         eval_board.players = list(board.players)
+        eval_board.last_player = board.last_player
+        eval_board.result = board.result
+        eval_board.status = board.status
+        eval_board.winner = board.winner
         return eval_board
 
     def _competing_player(self,board):

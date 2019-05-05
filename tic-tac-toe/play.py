@@ -3,8 +3,8 @@ from live_player import LivePlayer
 from min_max_player import MinMaxPlayer
 
 board = TicTacToe()
-board.add_new_player(LivePlayer('Jack', 'x'))
-board.add_new_player(Player('Jill','o'))
+board.add_new_player(LivePlayer('John Doe', 'x'))
+board.add_new_player(Player('Jean Doe','o'))
 
 def play_game(board):
     while board.status is not Status.Complete:
@@ -15,11 +15,19 @@ def play_game(board):
         move = p.choose_move(board) 
         board.make_move(p,move)
         board.visualize_state()
+        if board.status == Status.Complete:
+            print('------------------------')
+            if board.result == Result.Draw:
+                print('We have a DRAW')
+            else:
+                print('{}({}) WON'.format(p.name,p.avatar))
+            print('------------------------')
+        
 
 def test_live_player():
     board = TicTacToe()
-    board.add_new_player(MinMaxPlayer('Jill','o'))
     board.add_new_player(LivePlayer('Jack', 'x'))
+    board.add_new_player(MinMaxPlayer('Jill','o'))
     play_game(board)
 
 test_live_player()

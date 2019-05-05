@@ -95,7 +95,6 @@ class Board:
 
         result = self.evaluate_result(player)
         if result != Result.Invalid:
-            print('Game Over !!')
             self.status = Status.Complete
             self.result = result
             if result == Result.Won:

@@ -4,7 +4,8 @@ import itertools
 class TicTacToe(Board):
 
     def __init__(self, nodes=[[' ' for c in range(3)] for r in range(3)]):
-        self.nodes = nodes
+        super().__init__()
+        self.nodes = list(nodes)
         self.winning_states = [
             [(0,0),(0,1),(0,2)],
             [(1,0),(1,1),(1,2)],
@@ -15,7 +16,7 @@ class TicTacToe(Board):
             [(0,0),(1,1),(2,2)],
             [(0,2),(1,1),(2,0)]]
 
-        super().__init__()
+       
 
 
     def reset(self):
@@ -89,7 +90,6 @@ class TicTacToe(Board):
         for row in range(len(self.nodes)):
             row_data = self.nodes[row]
             print('|{}|{}|{}|'.format(self.translate_node(row_data[0]), self.translate_node(row_data[1]), self.translate_node(row_data[2])))
-            #print('-------')
 
 
 
