@@ -56,4 +56,4 @@ def test_board_statistics(p1,p2,test_count=100):
     print('Draws: {}   Player 1 Won: {}     Player 2 Won: {}'.format(draws,player1,player2))
 
 
-#test_board_statistics(Player('Jack', 'x'),Player('Jill','o'))
+#test_board_statistics(MinMaxPlayer('Jill','o'),Player('Jack', 'x'))
